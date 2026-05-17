@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriTrack">
+<title>NutriTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:#08080f;color:#f0f0f5;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{display:none}
+textarea,input{font-family:'DM Sans',sans-serif}
+input[type=number]::-webkit-inner-spin-button{opacity:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.fade-up{animation:fadeUp .3s ease}
+#app{max-width:430px;margin:0 auto;padding-bottom:80px;min-height:100vh}
+.header{padding:28px 20px 0;background:linear-gradient(180deg,#10101a 0%,transparent 100%)}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.header-label{font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase;margin-bottom:3px}
+.header-date{font-size:13px;color:#666}
+.header-cal{font-size:36px;font-weight:700;letter-spacing:-2px;line-height:1;font-family:'DM Mono',monospace}
+.header-goal{font-size:11px;color:#555}
+.rings{display:flex;gap:12px;justify-content:space-between;margin-bottom:20px}
+.ring-wrap{position:relative;flex-shrink:0}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-val{font-size:15px;font-weight:700;line-height:1}
+.ring-val.sm{font-size:11px}
+.ring-sub{font-size:9px;color:#555;margin-top:2px}
+.remaining{display:flex;justify-content:center;margin-bottom:20px;font-size:12px;font-weight:500}
+.card{background:#10101a;border:1px solid #1a1a28;border-radius:16px;padding:16px;margin-bottom:14px}
+.section-label{font-size:10px;color:#555;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px}
+.img-preview{position:relative;margin-bottom:10px}
+.img-preview img{width:100%;border-radius:10px;max-height:160px;object-fit:cover}
+.img-preview button{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border:none;border-radius:50%;width:26px;height:26px;color:#fff;cursor:pointer;font-size:16px;line-height:1}
+textarea{width:100%;background:#0a0a14;border:1px solid #1a1a28;border-radius:10px;padding:10px 12px;color:#f0f0f5;font-size:14px;resize:none;outline:none;line-height:1.5;margin-bottom:10px}
+textarea::placeholder{color:#333}
+.btn-row{display:flex;gap:8px}
+.btn-icon{background:#1a1a28;border:1px solid #1a1a28;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:18px;color:#f0f0f5}
+.btn-estimate{flex:1;background:#f5c842;border:none;border-radius:10px;padding:10px;cursor:pointer;color:#000;font-weight:700;font-size:13px;transition:all .2s}
+.btn-estimate:disabled{opacity:.35;background:#1a1a28;color:#555}
+.btn-estimate.loading{animation:pulse 1s infinite;background:#1a1a28;color:#555}
+.error-box{margin-top:10px;font-size:12px;color:#ff4757;background:#ff475718;padding:8px 12px;border-radius:8px}
+.ai-result{margin-top:12px;background:#0a0a14;border-radius:12px;border:1px solid rgba(245,200,66,.25);padding:14px}
+.ai-result-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ai-name{font-size:15px;font-weight:600}
+.ai-cal{font-size:24px;font-weight:700;color:#f5c842;font-family:'DM Mono',monospace}
+.ai-cal span{font-size:11px;font-weight:400;color:#555}
+.ai-macros{display:flex;gap:12px;font-size:12px;color:#666;margin-bottom:6px}
+.ai-confidence{margin-left:auto}
+.ai-note{font-size:11px;color:#555;margin-bottom:10px}
+.ai-actions{display:flex;gap:8px}
+.btn-add{flex:1;background:#2ed573;color:#000;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-cancel{background:#1a1a28;color:#555;border:none;border-radius:10px;padding:11px 14px;cursor:pointer;font-size:14px}
+.entries-label{font-size:10px;color:#555;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;padding-left:2px}
+.entry{background:#10101a;border:1px solid #1a1a28;border-radius:12px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px}
+.entry-info{flex:1}
+.entry-name-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.entry-name{font-size:14px;font-weight:500}
+.entry-meta{font-size:11px;color:#555}
+.entry-note{font-size:11px;color:#444;margin-top:2px}
+.entry-cal{text-align:right}
+.entry-cal-val{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:#f5c842}
+.entry-cal-unit{font-size:9px;color:#333}
+.btn-remove{background:none;border:none;color:#2a2a3a;cursor:pointer;font-size:18px;padding:4px;line-height:1}
+.empty{text-align:center;padding:48px 20px;color:#222}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-text{font-size:14px;color:#333}
+.empty-sub{font-size:12px;color:#222;margin-top:4px}
+/* History */
+.week-card{background:#10101a;border:1px solid #1a1a28;border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer}
+.week-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.week-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.week-days-count{font-size:11px;color:#555}
+.week-total{font-size:22px;font-weight:700;font-family:'DM Mono',monospace}
+.week-pct{font-size:10px;color:#555}
+.week-bar{display:flex;gap:4px;align-items:flex-end;height:60px}
+.week-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.week-bar-fill{width:100%;border-radius:3px;transition:height .4s ease}
+.week-bar-label{font-size:9px;text-transform:capitalize}
+.week-macros{display:flex;gap:16px;margin-top:10px;font-size:11px;color:#555}
+.back-btn{background:none;border:none;color:#555;cursor:pointer;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:6px;padding-left:2px}
+.day-card{background:#10101a;border:1px solid #1a1a28;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.day-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.day-card-name{font-size:13px;font-weight:600;text-transform:capitalize}
+.day-card-cal{font-size:15px;font-weight:700;font-family:'DM Mono',monospace}
+.day-entry{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #1a1a28}
+.day-entry-name{font-size:13px}
+.day-entry-meta{font-size:10px;color:#555}
+.day-entry-cal{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#f5c842}
+/* Settings */
+.setting-card{background:#10101a;border:1px solid #1a1a28;border-radius:16px;padding:16px;margin-bottom:10px}
+.setting-label{font-size:12px;color:#555;margin-bottom:8px}
+.setting-input{width:100%;background:#0a0a14;border:1px solid #1a1a28;border-radius:10px;padding:10px 14px;color:#f0f0f5;font-size:20px;font-weight:700;font-family:'DM Mono',monospace;outline:none}
+.setting-hint{font-size:11px;color:#555;margin-top:6px}
+.btn-save{width:100%;background:#f5c842;color:#000;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.info-card{background:#10101a;border:1px solid #1a1a28;border-radius:16px;padding:14px;margin-top:16px;font-size:11px;color:#333;line-height:1.7}
+/* Nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0a0a12;border-top:1px solid #1a1a28;display:flex;padding:10px 0 22px;z-index:100}
+.nav-btn{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0}
+.nav-icon{font-size:21px;transition:filter .2s}
+.nav-icon.inactive{filter:grayscale(1) opacity(.3)}
+.nav-label{font-size:10px;transition:color .2s;letter-spacing:.3px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-label" id="hdr-type"></div>
+        <div class="header-date" id="hdr-date"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="header-cal" id="hdr-cal">0</div>
+        <div class="header-goal" id="hdr-goal"></div>
+      </div>
+    </div>
+    <div class="rings" id="rings-container"></div>
+    <div class="remaining" id="remaining"></div>
+  </div>
+
+  <div id="view-today" style="padding:0 16px"></div>
+  <div id="view-history" style="padding:0 16px;display:none"></div>
+  <div id="view-settings" style="padding:0 16px;display:none"></div>
+
+  <nav class="nav">
+    <button class="nav-btn" onclick="switchView('today')">
+      <span class="nav-icon" id="nav-icon-today">🔥</span>
+      <span class="nav-label" id="nav-label-today" style="color:#f5c842">Aujourd'hui</span>
+    </button>
+    <button class="nav-btn" onclick="switchView('history')">
+      <span class="nav-icon inactive" id="nav-icon-history">📊</span>
+      <span class="nav-label" id="nav-label-history" style="color:#333">Historique</span>
+    </button>
+    <button class="nav-btn" onclick="switchView('settings')">
+      <span class="nav-icon inactive" id="nav-icon-settings">⚙️</span>
+      <span class="nav-label" id="nav-label-settings" style="color:#333">Objectifs</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────────────
+const LS = {
+  get:(k,fb=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+
+// ── State ─────────────────────────────────────────────────────────
+let allData = LS.get('nt-data', {});
+let settings = LS.get('nt-settings', {weight:75, calWeek:2500, calWeekend:3500});
+let currentView = 'today';
+let selectedWeek = null;
+let pendingImage = null; // {base64, type, preview}
+let aiResult = null;
+
+// ── Date helpers ─────────────────────────────────────────────────
+const todayKey = () => new Date().toISOString().split('T')[0];
+const isWeekend = d => { const day=new Date(d).getDay(); return day===0||day===6; };
+const formatDay = d => new Date(d).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+const formatDayShort = d => new Date(d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+const getWeekKey = d => {
+  const dt=new Date(d), day=dt.getDay()===0?6:dt.getDay()-1;
+  const mon=new Date(dt); mon.setDate(dt.getDate()-day);
+  return mon.toISOString().split('T')[0];
+};
+const getWeekDays = mon => Array.from({length:7},(_,i)=>{
+  const d=new Date(mon); d.setDate(d.getDate()+i); return d.toISOString().split('T')[0];
+});
+const formatWeekLabel = mon => {
+  const days=getWeekDays(mon);
+  const s=new Date(days[0]).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  const e=new Date(days[6]).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  return `${s} - ${e}`;
+};
+
+// ── Computed ─────────────────────────────────────────────────────
+const today = () => todayKey();
+const protGoal = () => Math.round(settings.weight * 1.6);
+const calGoal = () => isWeekend(today()) ? settings.calWeekend : settings.calWeek;
+const todayEntries = () => allData[today()] || [];
+const todayCal = () => todayEntries().reduce((s,e)=>s+e.calories,0);
+const todayProt = () => todayEntries().reduce((s,e)=>s+(e.proteins||0),0);
+const todayCarbs = () => todayEntries().reduce((s,e)=>s+(e.carbs||0),0);
+const todayFats = () => todayEntries().reduce((s,e)=>s+(e.fats||0),0);
+
+// ── Save ─────────────────────────────────────────────────────────
+const saveData = d => { allData=d; LS.set('nt-data',d); };
+const saveSettings = s => { settings=s; LS.set('nt-settings',s); };
+
+// ── SVG Ring ─────────────────────────────────────────────────────
+function ringHTML(value, max, size, color, label, sublabel) {
+  const stroke=7, r=(size-stroke)/2, circ=2*Math.PI*r;
+  const pct=Math.min(value/max,1), over=value>max;
+  const offset=circ*(1-pct);
+  const c=over?'#ff4757':color;
+  const labelColor=over?'#ff4757':'#f0f0f5';
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1e1e2a" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${c}" stroke-width="${stroke}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+        style="transition:stroke-dashoffset .6s ease"/>
+    </svg>
+    <div class="ring-inner">
+      <div class="ring-val ${size>70?'':'sm'}" style="color:${labelColor}">${label}</div>
+      <div class="ring-sub">${sublabel}</div>
+    </div>
+  </div>`;
+}
+
+// ── Header ───────────────────────────────────────────────────────
+function renderHeader() {
+  const t=today(), cal=todayCal(), goal=calGoal(), rem=goal-cal;
+  document.getElementById('hdr-type').textContent = isWeekend(t) ? 'Weekend' : 'Semaine';
+  document.getElementById('hdr-date').textContent = formatDay(t);
+  document.getElementById('hdr-cal').textContent = cal.toLocaleString('fr-FR');
+  document.getElementById('hdr-goal').textContent = `/ ${goal.toLocaleString('fr-FR')} kcal`;
+
+  document.getElementById('rings-container').innerHTML =
+    ringHTML(cal, goal, 78, '#f5c842', Math.round((cal/goal)*100)+'%', 'calories') +
+    ringHTML(todayProt(), protGoal(), 78, '#7bed9f', todayProt()+'g', 'proteines') +
+    ringHTML(todayCarbs(), Math.round(goal*.5/4), 78, '#70a1ff', todayCarbs()+'g', 'glucides') +
+    ringHTML(todayFats(), Math.round(goal*.3/9), 78, '#ffa502', todayFats()+'g', 'lipides');
+
+  const remEl = document.getElementById('remaining');
+  if (rem >= 0) {
+    remEl.style.color = '#2ed573';
+    remEl.textContent = `${rem.toLocaleString('fr-FR')} kcal restantes aujourd'hui`;
+  } else {
+    remEl.style.color = '#ff4757';
+    remEl.textContent = `⚠️ ${Math.abs(rem).toLocaleString('fr-FR')} kcal au-dessus de l'objectif`;
+  }
+}
+
+// ── AI Call ──────────────────────────────────────────────────────
+async function estimateWithAI(text, imageBase64, imageType) {
+  const hasImage = !!imageBase64;
+  const content = [];
+  if (imageBase64) content.push({type:'image',source:{type:'base64',media_type:imageType,data:imageBase64}});
+  if (text) content.push({type:'text',text});
+  if (!text && imageBase64) content.push({type:'text',text:'Analyse ce repas.'});
+
+  const sysPhoto = `Tu es un expert en nutrition. Photo d'un repas: identifie et estime le total calorique de tout ce qui est visible. Reponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou apres. Format: {"name":"description courte","calories":nombre_entier,"proteins":nombre_entier,"carbs":nombre_entier,"fats":nombre_entier,"confidence":"haute|moyenne|basse","note":"remarque courte optionnelle"} Si pas de nourriture: {"error":"Pas un aliment"}.`;
+  const sysText = `Tu es un expert en nutrition. L'utilisateur decrit ce qu'il mange en langage naturel. Interprete TOUJOURS comme un aliment ou repas, meme si court ou avec caracteres speciaux. Si liste multiple lignes, retourne {"error":"liste"}. Reponds UNIQUEMENT JSON valide sans markdown ni backticks. Format: {"name":"nom court","calories":nombre_entier,"proteins":nombre_entier,"carbs":nombre_entier,"fats":nombre_entier,"confidence":"haute|moyenne|basse","note":"remarque courte optionnelle"} Estime portion normale si quantite non precisee. Si pas un aliment: {"error":"Pas un aliment"}.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','anthropic-beta':'interop-20250515'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:hasImage?sysPhoto:sysText,messages:[{role:'user',content}]})
+  });
+  const raw = await resp.text();
+  let data;
+  try { data=JSON.parse(raw); } catch(e) { throw new Error('HTTP '+resp.status+' non-JSON: '+raw.slice(0,100)); }
+  if (data.type==='error'||data.error) throw new Error(data.error?.message||data.message||'API error');
+  const txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  if (!txt) throw new Error('Reponse vide');
+  const match = txt.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('Pas de JSON: '+txt.slice(0,80));
+  return JSON.parse(match[0]);
+}
+
+// ── Today View ───────────────────────────────────────────────────
+function renderToday() {
+  const el = document.getElementById('view-today');
+  const entries = todayEntries();
+
+  let entriesHTML = '';
+  if (entries.length > 0) {
+    const rev = [...entries].reverse();
+    entriesHTML = `<div class="entries-label">Aujourd'hui · ${entries.length} entree${entries.length>1?'s':''}</div>`;
+    rev.forEach(e => {
+      entriesHTML += `<div class="entry fade-up">
+        <div class="entry-info">
+          <div class="entry-name-row">${e.hasImage?'<span style="font-size:11px">📷</span>':''}<div class="entry-name">${e.name}</div></div>
+          <div class="entry-meta">${e.time} · P${e.proteins}g G${e.carbs}g L${e.fats}g</div>
+          ${e.note?`<div class="entry-note">${e.note}</div>`:''}
+        </div>
+        <div class="entry-cal">
+          <div class="entry-cal-val">${e.calories}</div>
+          <div class="entry-cal-unit">kcal</div>
+        </div>
+        <button class="btn-remove" onclick="removeEntry('${today()}',${e.id})">×</button>
+      </div>`;
+    });
+  }
+
+  const emptyHTML = entries.length === 0 && !aiResult ? `<div class="empty">
+    <div class="empty-icon">🍽️</div>
+    <div class="empty-text">Rien encore aujourd'hui</div>
+    <div class="empty-sub">Decris ou photographie ce que tu manges</div>
+  </div>` : '';
+
+  el.innerHTML = `
+  <div class="card" id="input-card">
+    <div class="section-label">Ajouter un aliment</div>
+    <div id="img-preview-wrap"></div>
+    <textarea id="food-input" rows="2" placeholder="Decris ce que tu manges..."></textarea>
+    <div class="btn-row">
+      <button class="btn-icon" onclick="document.getElementById('camera-input').click()">📷</button>
+      <input id="camera-input" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
+      <button class="btn-icon" onclick="document.getElementById('gallery-input').click()">🖼️</button>
+      <input id="gallery-input" type="file" accept="image/*" style="display:none" onchange="handleImage(this)">
+      <button class="btn-estimate" id="btn-est" onclick="runAI()">✨ Estimer</button>
+    </div>
+    <div id="error-box" style="display:none" class="error-box"></div>
+    <div id="ai-result-box" style="display:none" class="ai-result"></div>
+  </div>
+  ${entriesHTML}
+  ${emptyHTML}`;
+
+  // Restore input state
+  const ta = document.getElementById('food-input');
+  ta.addEventListener('input', () => { clearAI(); updateEstimateBtn(); });
+  updateEstimateBtn();
+
+  if (pendingImage) renderImagePreview();
+  if (aiResult) renderAIResult();
+}
+
+function updateEstimateBtn() {
+  const ta = document.getElementById('food-input');
+  const btn = document.getElementById('btn-est');
+  if (!btn) return;
+  const hasContent = (ta && ta.value.trim()) || pendingImage;
+  btn.disabled = !hasContent;
+}
+
+function handleImage(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const full = e.target.result;
+    pendingImage = {base64: full.split(',')[1], type: file.type, preview: full};
+    aiResult = null;
+    renderImagePreview();
+    updateEstimateBtn();
+    const ta = document.getElementById('food-input');
+    if (ta) ta.placeholder = 'Commentaire optionnel...';
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImagePreview() {
+  const wrap = document.getElementById('img-preview-wrap');
+  if (!wrap || !pendingImage) return;
+  wrap.innerHTML = `<div class="img-preview">
+    <img src="${pendingImage.preview}" alt="preview">
+    <button onclick="clearImage()">×</button>
+  </div>`;
+}
+
+function clearImage() {
+  pendingImage = null;
+  const wrap = document.getElementById('img-preview-wrap');
+  if (wrap) wrap.innerHTML = '';
+  const ta = document.getElementById('food-input');
+  if (ta) ta.placeholder = 'Decris ce que tu manges...';
+  updateEstimateBtn();
+}
+
+function clearAI() {
+  aiResult = null;
+  const rb = document.getElementById('ai-result-box');
+  if (rb) { rb.style.display = 'none'; rb.innerHTML = ''; }
+  const eb = document.getElementById('error-box');
+  if (eb) eb.style.display = 'none';
+}
+
+async function runAI() {
+  const ta = document.getElementById('food-input');
+  const text = ta ? ta.value.trim() : '';
+  if (!text && !pendingImage) return;
+
+  const btn = document.getElementById('btn-est');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.textContent = 'Estimation...';
+  clearAI();
+
+  try {
+    const res = await estimateWithAI(text||null, pendingImage?.base64||null, pendingImage?.type||null);
+    if (res.error === 'liste') {
+      showError("Saisis un seul aliment ou plat a la fois.");
+    } else if (res.error) {
+      showError(res.error);
+    } else {
+      aiResult = res;
+      renderAIResult();
+    }
+  } catch(err) {
+    showError('Erreur: ' + (err.message || 'reessaie'));
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '✨ Estimer';
+    updateEstimateBtn();
+  }
+}
+
+function showError(msg) {
+  const eb = document.getElementById('error-box');
+  if (eb) { eb.style.display = 'block'; eb.textContent = msg; }
+}
+
+function renderAIResult() {
+  if (!aiResult) return;
+  const rb = document.getElementById('ai-result-box');
+  if (!rb) return;
+  const confColor = aiResult.confidence==='haute'?'#2ed573':aiResult.confidence==='moyenne'?'#ffa502':'#ff4757';
+  rb.style.display = 'block';
+  rb.innerHTML = `
+    <div class="ai-result-top">
+      <div class="ai-name">${aiResult.name}</div>
+      <div class="ai-cal">${aiResult.calories}<span> kcal</span></div>
+    </div>
+    <div class="ai-macros">
+      <span>🥩 P ${aiResult.proteins}g</span>
+      <span>🌾 G ${aiResult.carbs}g</span>
+      <span>🧈 L ${aiResult.fats}g</span>
+      <span class="ai-confidence" style="color:${confColor}">● ${aiResult.confidence}</span>
+    </div>
+    ${aiResult.note?`<div class="ai-note">${aiResult.note}</div>`:''}
+    <div class="ai-actions">
+      <button class="btn-add" onclick="confirmAdd()">Ajouter ✓</button>
+      <button class="btn-cancel" onclick="cancelAI()">✕</button>
+    </div>`;
+}
+
+function confirmAdd() {
+  if (!aiResult) return;
+  const ta = document.getElementById('food-input');
+  const entry = {
+    id: Date.now(),
+    name: aiResult.name,
+    calories: aiResult.calories,
+    proteins: aiResult.proteins,
+    carbs: aiResult.carbs,
+    fats: aiResult.fats,
+    confidence: aiResult.confidence,
+    note: aiResult.note||null,
+    hasImage: !!pendingImage,
+    time: new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+  };
+  const t = today();
+  saveData({...allData, [t]: [...(allData[t]||[]), entry]});
+  aiResult = null;
+  pendingImage = null;
+  if (ta) ta.value = '';
+  renderHeader();
+  renderToday();
+}
+
+function cancelAI() {
+  aiResult = null;
+  clearAI();
+}
+
+function removeEntry(dateKey, id) {
+  saveData({...allData, [dateKey]: (allData[dateKey]||[]).filter(e=>e.id!==id)});
+  renderHeader();
+  renderToday();
+}
+
+// ── History View ─────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('view-history');
+  if (selectedWeek) {
+    renderWeekDetail(el);
+    return;
+  }
+  const allDays = Object.keys(allData).sort((a,b)=>b.localeCompare(a));
+  const weekKeys = [...new Set(allDays.map(getWeekKey))].sort((a,b)=>b.localeCompare(a));
+  const t = today();
+  const calGoalWeek = settings.calWeek;
+  const calGoalWeekend = settings.calWeekend;
+
+  if (weekKeys.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:48px;color:#333;font-size:14px">Aucune donnee pour l\'instant</div>';
+    return;
+  }
+
+  let html = '<div class="section-label" style="padding-left:2px">Resumes hebdomadaires</div>';
+  weekKeys.forEach(wk => {
+    const days = getWeekDays(wk);
+    const entries = days.flatMap(d=>allData[d]||[]);
+    const totalCal = entries.reduce((s,e)=>s+e.calories,0);
+    const totalProt = entries.reduce((s,e)=>s+(e.proteins||0),0);
+    const totalCarbs = entries.reduce((s,e)=>s+(e.carbs||0),0);
+    const totalFats = entries.reduce((s,e)=>s+(e.fats||0),0);
+    const daysWithData = days.filter(d=>(allData[d]||[]).length>0).length;
+    const expectedCal = days.reduce((s,d)=>s+(isWeekend(d)?calGoalWeekend:calGoalWeek),0);
+    const pct = Math.round((totalCal/expectedCal)*100);
+    const isCurrent = getWeekKey(t)===wk;
+    const calColor = pct>110?'#ff4757':pct>90?'#f5c842':'#2ed573';
+
+    // Bar chart
+    const maxCal = Math.max(...days.map(d=>(allData[d]||[]).reduce((s,e)=>s+e.calories,0)), calGoalWeekend);
+    let barsHTML = '';
+    days.forEach(d => {
+      const cal = (allData[d]||[]).reduce((s,e)=>s+e.calories,0);
+      const goal = isWeekend(d)?calGoalWeekend:calGoalWeek;
+      const h = maxCal>0?Math.round((cal/maxCal)*52):0;
+      const over = cal>goal;
+      const isT = d===t;
+      const bg = isT?'#f5c842':over?'#ff4757':'#2ed573';
+      const dayLabel = new Date(d).toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,2);
+      barsHTML += `<div class="week-bar-col">
+        <div class="week-bar-fill" style="height:${h||2}px;background:${bg};opacity:${cal===0?.15:1}"></div>
+        <div class="week-bar-label" style="color:${isT?'#f5c842':'#444'}">${dayLabel}</div>
+      </div>`;
+    });
+
+    html += `<div class="week-card" onclick="openWeek('${wk}')">
+      <div class="week-top">
+        <div>
+          <div class="week-title">${isCurrent?'Cette semaine':formatWeekLabel(wk)}</div>
+          <div class="week-days-count">${daysWithData} jour${daysWithData>1?'s':''} enregistre${daysWithData>1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="week-total" style="color:${calColor}">${totalCal.toLocaleString('fr-FR')}</div>
+          <div class="week-pct">/ ${expectedCal.toLocaleString('fr-FR')} kcal (${pct}%)</div>
+        </div>
+      </div>
+      <div class="week-bar">${barsHTML}</div>
+      <div class="week-macros">
+        <span>🥩 ${totalProt}g</span><span>🌾 ${totalCarbs}g</span><span>🧈 ${totalFats}g</span>
+        <span style="margin-left:auto;color:#333">→</span>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function openWeek(wk) {
+  selectedWeek = wk;
+  renderHistory();
+}
+
+function renderWeekDetail(el) {
+  const days = getWeekDays(selectedWeek);
+  let html = `<button class="back-btn" onclick="closeWeek()">← Retour</button>
+    <div class="section-label" style="padding-left:2px">${formatWeekLabel(selectedWeek)}</div>`;
+
+  let hasAny = false;
+  days.forEach(d => {
+    const entries = allData[d]||[];
+    if (entries.length===0) return;
+    hasAny = true;
+    const cal = entries.reduce((s,e)=>s+e.calories,0);
+    const goal = isWeekend(d)?settings.calWeekend:settings.calWeek;
+    const calColor = cal>goal?'#ff4757':'#2ed573';
+    let entriesHTML = '';
+    entries.forEach(e => {
+      entriesHTML += `<div class="day-entry">
+        <div><div class="day-entry-name">${e.name}</div><div class="day-entry-meta">${e.time} · P${e.proteins}g G${e.carbs}g L${e.fats}g</div></div>
+        <div class="day-entry-cal">${e.calories}</div>
+      </div>`;
+    });
+    html += `<div class="day-card">
+      <div class="day-card-top">
+        <div class="day-card-name">${formatDayShort(d)}</div>
+        <div class="day-card-cal" style="color:${calColor}">${cal.toLocaleString('fr-FR')} <span style="font-size:10px;font-weight:400;color:#555">/ ${goal.toLocaleString('fr-FR')}</span></div>
+      </div>
+      ${entriesHTML}
+    </div>`;
+  });
+  if (!hasAny) html += '<div style="text-align:center;padding:40px;color:#333;font-size:14px">Aucune entree cette semaine</div>';
+  el.innerHTML = html;
+}
+
+function closeWeek() {
+  selectedWeek = null;
+  renderHistory();
+}
+
+// ── Settings View ─────────────────────────────────────────────────
+function renderSettings() {
+  const el = document.getElementById('view-settings');
+  const protCalc = Math.round((parseFloat(document.getElementById('s-weight')?.value||settings.weight)*1.6));
+  el.innerHTML = `
+    <div class="section-label" style="padding-left:2px">Objectifs</div>
+    <div class="setting-card">
+      <div class="setting-label">Poids (kg)</div>
+      <input class="setting-input" type="number" id="s-weight" value="${settings.weight}" oninput="updateProtHint()">
+      <div class="setting-hint" id="prot-hint">Objectif proteines : ${Math.round(settings.weight*1.6)}g/j</div>
+    </div>
+    <div class="setting-card">
+      <div class="setting-label">Calories semaine (lun-ven)</div>
+      <input class="setting-input" type="number" id="s-calweek" value="${settings.calWeek}">
+    </div>
+    <div class="setting-card">
+      <div class="setting-label">Calories weekend (sam-dim)</div>
+      <input class="setting-input" type="number" id="s-calweekend" value="${settings.calWeekend}">
+    </div>
+    <button class="btn-save" onclick="applySettings()">Enregistrer</button>
+    <div class="info-card">Les estimations sont generees par l'IA Claude d'Anthropic et representent des approximations. Pour un suivi medical, consulte un professionnel de sante.</div>`;
+}
+
+function updateProtHint() {
+  const w = parseFloat(document.getElementById('s-weight')?.value||0);
+  const h = document.getElementById('prot-hint');
+  if (h) h.textContent = `Objectif proteines : ${Math.round(w*1.6)}g/j`;
+}
+
+function applySettings() {
+  saveSettings({
+    weight: parseFloat(document.getElementById('s-weight')?.value)||75,
+    calWeek: parseInt(document.getElementById('s-calweek')?.value)||2500,
+    calWeekend: parseInt(document.getElementById('s-calweekend')?.value)||3500
+  });
+  renderHeader();
+  alert('Objectifs enregistres !');
+}
+
+// ── Navigation ───────────────────────────────────────────────────
+function switchView(v) {
+  currentView = v;
+  ['today','history','settings'].forEach(id => {
+    document.getElementById('view-'+id).style.display = id===v?'block':'none';
+    document.getElementById('nav-icon-'+id).className = 'nav-icon'+(id===v?'':' inactive');
+    document.getElementById('nav-label-'+id).style.color = id===v?'#f5c842':'#333';
+  });
+  if (v==='today') renderToday();
+  else if (v==='history') { selectedWeek=null; renderHistory(); }
+  else if (v==='settings') renderSettings();
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+renderHeader();
+renderToday();
+</script>
+</body>
+</html>
